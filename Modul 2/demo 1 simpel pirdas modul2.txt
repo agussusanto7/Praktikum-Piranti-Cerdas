@@ -1,0 +1,48 @@
+#include <Wire.h>
+#include <MPU6050_tockn.h>
+
+MPU6050 mpu(Wire);
+
+#define BUZZER 25          // pin buzzer
+#define THRESH 1.5         // batas perubahan sudut (derajat)
+
+float prevX = 0, prevY = 0, prevZ = 0;
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin(21,22);       // untuk ESP32
+  mpu.begin();
+  delay(500);
+  mpu.calcGyroOffsets();
+
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(BUZZER, LOW);
+
+  Serial.println("Siap!");
+}
+
+void loop() {
+  mpu.update();
+
+  float x = mpu.getAngleX();
+  float y = mpu.getAngleY();
+  float z = mpu.getAngleZ();
+
+  // cek apakah ada gerakan (perubahan sudut)
+  if (fabs(x - prevX) > THRESH || fabs(y - prevY) > THRESH || fabs(z - prevZ) > THRESH) {
+    digitalWrite(BUZZER, HIGH);      // nyalakan buzzer
+  } else {
+    digitalWrite(BUZZER, LOW);       // matikan buzzer
+  }
+
+  // simpan sudut untuk perbandingan selanjutnya
+  prevX = x;
+  prevY = y;
+  prevZ = z;
+
+  Serial.print("X: "); Serial.print(x);
+  Serial.print("  Y: "); Serial.print(y);
+  Serial.print("  Z: "); Serial.println(z);
+
+  delay(100);  // jeda
+}
